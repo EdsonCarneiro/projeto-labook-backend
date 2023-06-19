@@ -1,27 +1,24 @@
-import { Request, Response } from 'express'
-import { PostBusiness } from '../business/PostBusiness'
-import { PostDTO } from '../dtos/PostDTO'
-import { BaseError } from '../errors/BaseError'
+import { Request, Response } from "express"
+import { PostBusiness } from "../business/PostBusiness"
+import { CreatePostInputDTO, DeletePostInputDTO, EditPostInputDTO, GetPostsInputDTO, LikeOrDislikePostInputDTO } from "../dtos/PostDTO"
+import { BaseError } from "../errors/BaseError"
 
-export class PostController{
-    constructor (
-        private postDTO: PostDTO,
-        private postBisness: PostBusiness
-    ){}
+export class PostController {
+    constructor(
+        private postBusiness: PostBusiness
+    ) {}
 
     public getPosts = async (req: Request, res: Response) => {
         try {
-            const input = {
-                q: req.query.q
+            const input: GetPostsInputDTO = {
+                token: req.headers.authorization
             }
 
-            // const postBusiness = new PostBusiness()
-            const output = await this.postBisness.getPosts(input)
-    
+            const output = await this.postBusiness.getPosts(input)
+
             res.status(200).send(output)
         } catch (error) {
             console.log(error)
-
             if (error instanceof BaseError) {
                 res.status(error.statusCode).send(error.message)
             } else {
@@ -30,32 +27,18 @@ export class PostController{
         }
     }
 
-    public createPosts = async (req: Request, res: Response) => {
+    public createPost = async (req: Request, res: Response) => {
         try {
-            // const { id, creatorId, content, likes, dislikes } = req.body
+            const input: CreatePostInputDTO = {
+                token: req.headers.authorization,
+                content: req.body.content
+            }
 
-            // const input = {
-            //     id,
-            //     creatorId,
-            //     content,
-            //     likes,
-            //     dislikes
-            // }
-            // const postDTO = new PostDTO()
-            const input = this.postDTO.createPostInput(
-                req.body.id,
-                req.body.creatorId,
-                req.body.content
-            )
+            await this.postBusiness.createPost(input)
 
-            // const postBusiness = new PostBusiness()
-            const output = await this.postBisness.createPost(input)
-    
-            res.status(201).send(output)
-    
+            res.status(201).end()
         } catch (error) {
             console.log(error)
-
             if (error instanceof BaseError) {
                 res.status(error.statusCode).send(error.message)
             } else {
@@ -64,21 +47,19 @@ export class PostController{
         }
     }
 
-    public updatePosts = async (req: Request, res: Response) => {
+    public editPost = async (req: Request, res: Response) => {
         try {
-            const input = this.postDTO.updatePostInput(
-                req.params.id,
-                req.body.value
-            )
+            const input: EditPostInputDTO = {
+                idToEdit: req.params.id,
+                content: req.body.content,
+                token: req.headers.authorization
+            }
 
-            // const postBusiness  = new PostBusiness()
-            const output = await this.postBisness.updatePosts(input)
+            await this.postBusiness.editPost(input)
 
-            res.status(200).send(output)
-    
+            res.status(200).end()
         } catch (error) {
             console.log(error)
-
             if (error instanceof BaseError) {
                 res.status(error.statusCode).send(error.message)
             } else {
@@ -87,20 +68,39 @@ export class PostController{
         }
     }
 
-    public deletePosts = async (req: Request, res: Response) => {
+    public deletePost = async (req: Request, res: Response) => {
         try {
-            const input = {
-                idToDelete: req.params.id
-            } 
+            const input: DeletePostInputDTO = {
+                idToDelete: req.params.id,
+                token: req.headers.authorization
+            }
 
-            // const postBusiness = new PostBusiness()
-            const output = await this.postBisness.deletePosts(input)
-    
-            res.status(200).send(output)    
-    
+            await this.postBusiness.deletePost(input)
+
+            res.status(200).end()
         } catch (error) {
             console.log(error)
+            if (error instanceof BaseError) {
+                res.status(error.statusCode).send(error.message)
+            } else {
+                res.status(500).send("Erro inesperado")
+            }
+        }
+    }
 
+    public likeOrDislikePost = async (req: Request, res: Response) => {
+        try {
+            const input: LikeOrDislikePostInputDTO = {
+                idToLikeOrDislike: req.params.id,
+                token: req.headers.authorization,
+                like: req.body.like
+            }
+
+            await this.postBusiness.likeOrDislikePost(input)
+
+            res.status(200).end()
+        } catch (error) {
+            console.log(error)
             if (error instanceof BaseError) {
                 res.status(error.statusCode).send(error.message)
             } else {
